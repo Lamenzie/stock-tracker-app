@@ -1,4 +1,4 @@
-import AppNavigator from './navigation/AppNavigator';
+import AppNavigator from './src/navigation/AppNavigator';
 import { useEffect } from 'react';
 import { getStockQuote } from './src/api/stocksApi';
 
