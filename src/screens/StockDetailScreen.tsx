@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Button } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { getStockQuote, getStockHistory } from "../api/stocksApi";
@@ -151,6 +151,15 @@ export default function StockDetailScreen({ navigation, route }: Props) {
             />
           </Svg>
         </View>
+        <Button
+          title="Přidat transakci"
+          onPress={() =>
+            navigation.navigate("AddTransaction", {
+              symbol,
+              currentPrice: price!,
+            })
+          }
+        />
       </View>
     );
 }
