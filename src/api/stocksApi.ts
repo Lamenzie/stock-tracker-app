@@ -1,43 +1,53 @@
-const API_KEY = process.env.EXPO_PUBLIC_ALPHA_KEY;
-const BASE_URL = "https://financialmodelingprep.com/api/v3";
+const API_KEY = "b81600657c6145ec89125f23241f92c0";
+const BASE_URL = "https://api.twelvedata.com";
 
-// ----- 1) aktuální cena akcie -----
+// ----- 1) Aktuální cena -----
 export async function getStockQuote(symbol: string) {
-    const url = `${BASE_URL}/quote/${symbol}?apikey=${API_KEY}`;
+  const url = `${BASE_URL}/price?symbol=${symbol}&apikey=${API_KEY}`;
+  console.log("DEBUG getStockQuote:", url);
 
-    const response = await fetch(url);
+  const response = await fetch(url);
 
-    if (!response.ok) {
-        throw new Error("Network error při volání API");
-    }
+  if (!response.ok) {
+    throw new Error(`Network error (${response.status})`);
+  }
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!data || data.length === 0) {
-        throw new Error("API vrátilo prázdná data (špatný symbol nebo vyčerpán limit)");
-    }
+  if (!data || !data.price) {
+    throw new Error("API returned empty data");
+  }
 
-    const stock = data[0];
+  const price = parseFloat(data.price);
 
-    return {
-        price: stock.price,
-        change: stock.changesPercentage,
-    };
+  return {
+    price,
+    change: 0, // později doplníme vypočítanou změnu
+  };
 }
 
-// ----- 2) historická data -----
+// ----- 2) Historická data -----
 export async function getStockHistory(symbol: string) {
-    const url = `${BASE_URL}/historical-price-full/${symbol}?serietype=line&apikey=${API_KEY}`;
+  const url = `${BASE_URL}/time_series?symbol=${symbol}&interval=1day&outputsize=30&apikey=${API_KEY}`;
+  console.log("DEBUG getStockHistory:", url);
 
-    const response = await fetch(url);
-    const data = await response.json();
+  const response = await fetch(url);
 
-    if (!data || !data.historical) {
-        throw new Error("Chyba načítání historických dat");
-    }
+  if (!response.ok) {
+    throw new Error(`History error (${response.status})`);
+  }
 
-    return data.historical.slice(0, 10).reverse().map((item: any) => ({
-        date: item.date,
-        price: item.close,
+  const data = await response.json();
+
+  if (!data || !data.values) {
+    throw new Error("Chyba načítání historických dat");
+  }
+
+  return data.values
+    .slice(0, 10)
+    .reverse()
+    .map((item: any) => ({
+      date: item.datetime,
+      price: parseFloat(item.close),
     }));
 }

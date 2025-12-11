@@ -13,7 +13,6 @@ type Props = {
     navigation: PortfolioNav;
 };
 
-
 type Holding = {
     symbol: string;
     totalAmount: number;
