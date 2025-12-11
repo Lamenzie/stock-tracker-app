@@ -25,6 +25,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+
+    "extra": {
+      "EXPO_PUBLIC_ALPHA_KEY": "EXPO_PUBLIC_ALPHA_KEY"
     }
   }
 }
