@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "stock-tracker",
-    "slug": "stock-tracker",
+    "name": "LlamaStockTracker",
+    "slug": "llama-stock-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,9 +16,10 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.lamenzie.llamastocktracker",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#020617"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -26,9 +27,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "extra": {
-      "EXPO_PUBLIC_ALPHA_KEY": "EXPO_PUBLIC_ALPHA_KEY"
-    }
+      "eas": {
+        "projectId": "3ee565a5-821b-46b9-84cb-b520efdfe9ed"
+      }
+    },
+    "owner": "lamec"
   }
 }

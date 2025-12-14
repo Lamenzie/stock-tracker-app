@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Button,
   Pressable,
   Dimensions,
 } from "react-native";
@@ -56,7 +55,7 @@ export default function StockDetailScreen({ navigation, route }: Props) {
         if (!mounted) return;
 
         setPrice(quote.price);
-        setHistory1M(histM); // už máš cca 10 bodů (cache/limit u tebe)
+        setHistory1M(histM); 
         setHistory1D(histD);
       } finally {
         if (mounted) setLoading(false);
@@ -69,12 +68,10 @@ export default function StockDetailScreen({ navigation, route }: Props) {
     };
   }, [symbol]);
 
-  // vyber data podle přepínače
   const chartData = useMemo(() => {
     return range === "1D" ? history1D : history1M;
   }, [range, history1D, history1M]);
 
-  // výpočet % změny podle vybraného rozsahu
   const changePercent = useMemo(() => {
     if (!chartData || chartData.length < 2) return 0;
 
@@ -89,7 +86,7 @@ export default function StockDetailScreen({ navigation, route }: Props) {
 
   // ===== SVG graf výpočty (full width) =====
   const screenW = Dimensions.get("window").width;
-  const chartWidth = Math.min(screenW - 40, 420); // pěkné i na iPadu
+  const chartWidth = Math.min(screenW - 40, 420); 
   const chartHeight = 200;
   const padding = 28;
 
@@ -136,35 +133,35 @@ export default function StockDetailScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.symbol}>{symbol}</Text>
-      <Text style={styles.price}>{price?.toFixed(2)} $</Text>
+      <View style={styles.heroCard}>
+        <Text style={styles.symbol}>{symbol}</Text>
+        <Text style={styles.price}>{price?.toFixed(2)} $</Text>
+        <Text style={[styles.change, positive ? styles.green : styles.red]}>
+          {positive ? "+" : ""}
+          {changePercent.toFixed(2)} %
+        </Text>
 
-      <Text style={[styles.change, positive ? styles.green : styles.red]}>
-        {positive ? "+" : ""}
-        {changePercent.toFixed(2)} %
-      </Text>
+        {/* ===== RANGE SWITCH ===== */}
+        <View style={styles.switch}>
+          <Pressable
+            onPress={() => setRange("1D")}
+            style={[styles.switchItem, range === "1D" && styles.switchActive]}
+          >
+            <Text style={range === "1D" ? styles.switchTextActive : undefined}>
+              1D
+            </Text>
+          </Pressable>
 
-      {/* ===== RANGE SWITCH ===== */}
-      <View style={styles.switch}>
-        <Pressable
-          onPress={() => setRange("1D")}
-          style={[styles.switchItem, range === "1D" && styles.switchActive]}
-        >
-          <Text style={range === "1D" ? styles.switchTextActive : undefined}>
-            1D
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setRange("1M")}
-          style={[styles.switchItem, range === "1M" && styles.switchActive]}
-        >
-          <Text style={range === "1M" ? styles.switchTextActive : undefined}>
-            1M
-          </Text>
-        </Pressable>
+          <Pressable
+            onPress={() => setRange("1M")}
+            style={[styles.switchItem, range === "1M" && styles.switchActive]}
+          >
+            <Text style={range === "1M" ? styles.switchTextActive : undefined}>
+              1M
+            </Text>
+          </Pressable>
+        </View>
       </View>
-
       {/* ===== GRAPH CARD ===== */}
       <View style={[styles.chartCard, { width: chartWidth + 20 }]}>
         {chartData.length < 2 ? (
@@ -185,12 +182,12 @@ export default function StockDetailScreen({ navigation, route }: Props) {
               {minPrice.toFixed(2)}
             </SvgText>
 
-            {/* grid */}
             <Path
               d={`M ${padding} ${padding} L ${chartWidth - padding} ${padding}`}
               stroke="#e5e7eb"
               strokeDasharray="4"
             />
+
             <Path
               d={`M ${padding} ${chartHeight / 2} L ${chartWidth - padding} ${
                 chartHeight / 2
@@ -198,6 +195,7 @@ export default function StockDetailScreen({ navigation, route }: Props) {
               stroke="#e5e7eb"
               strokeDasharray="4"
             />
+            
             <Path
               d={`M ${padding} ${chartHeight - padding} L ${
                 chartWidth - padding
@@ -206,11 +204,17 @@ export default function StockDetailScreen({ navigation, route }: Props) {
               strokeDasharray="4"
             />
 
-            {/* line */}
+            <Path
+              d={`${path} L ${chartWidth - padding} ${
+                chartHeight - padding
+              } L ${padding} ${chartHeight - padding} Z`}
+              fill={positive ? "rgba(22,163,74,0.15)" : "rgba(220,38,38,0.15)"}
+            />
+
             <Path
               d={path}
               fill="none"
-              stroke="#2563eb"
+              stroke={positive ? "#16a34a" : "#dc2626"}
               strokeWidth={3}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -220,15 +224,17 @@ export default function StockDetailScreen({ navigation, route }: Props) {
       </View>
 
       <View style={{ width: "100%", paddingHorizontal: 20, marginTop: 14 }}>
-        <Button
-          title="Přidat transakci"
+        <Pressable
+          style={styles.cta}
           onPress={() =>
             navigation.navigate("AddTransaction", {
               symbol,
               currentPrice: price ?? 0,
             })
           }
-        />
+        >
+          <Text style={styles.ctaText}>Přidat transakci</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -236,66 +242,82 @@ export default function StockDetailScreen({ navigation, route }: Props) {
 
 // ---------- STYLES ----------
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: 40,
-    backgroundColor: "#fff",
-  },
-  symbol: {
-    fontSize: 32,
-    fontWeight: "bold",
-  },
-  price: {
-    fontSize: 28,
-    marginTop: 10,
-  },
-  change: {
-    fontSize: 20,
-    marginTop: 8,
-    fontWeight: "700",
-  },
-  green: {
-    color: "#16a34a",
-  },
-  red: {
-    color: "#dc2626",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  switch: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 18,
-    marginBottom: 12,
-  },
-  switchItem: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#e5e7eb",
-  },
-  switchActive: {
-    backgroundColor: "#000",
-  },
-  switchTextActive: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-
-  chartCard: {
-    padding: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-  },
+    container: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: "#fff",
+    },
+    heroCard: {
+        width: "100%",
+        paddingTop: 20,
+        paddingBottom: 24,
+        alignItems: "center",
+    },
+    symbol: {
+        fontSize: 32,
+        fontWeight: "bold",
+    },
+    price: {
+        fontSize: 28,
+        marginTop: 10,
+    },
+    change: {
+        fontSize: 20,
+        marginTop: 8,
+        fontWeight: "700",
+    },
+    green: {
+        color: "#16a34a",
+    },
+    red: {
+       color: "#dc2626",
+    },
+    center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    switch: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 18,
+        marginBottom: 12,
+    },
+    switchItem: {
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        backgroundColor: "#e5e7eb",
+    },
+    switchActive: {
+        backgroundColor: "#000",
+    },
+    switchTextActive: {
+        color: "#fff",
+        fontWeight: "bold",
+    },
+    chartCard: {
+        padding: 10,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#e5e7eb",
+        backgroundColor: "#fff",
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+    },
+    cta: {
+        width: "100%",
+        marginTop: 20,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: "#000",
+        alignItems: "center",
+    },
+    ctaText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
 });

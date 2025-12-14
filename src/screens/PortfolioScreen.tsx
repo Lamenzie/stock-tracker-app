@@ -174,61 +174,88 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: "#fff",
     },
+
     title: {
-        fontSize: 26,
-        fontWeight: "bold",
+        fontSize: 28,
+        fontWeight: "800",
         marginBottom: 20,
+        color: "#020617",
     },
+
     card: {
-        padding: 16,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "#e5e7eb",
-        marginBottom: 14,
+        padding: 18,
+        borderRadius: 18,
+        marginBottom: 18,
+        borderWidth: 2,
+        borderColor: "#020617",
+        backgroundColor: "#f9fafb",
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 3,
     },
+
     symbol: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 4,
+        fontSize: 21,
+        fontWeight: "800",
+        marginBottom: 6,
+        color: "#020617",
     },
+
     profit: {
-        marginTop: 8,
-        fontSize: 16,
-        fontWeight: "bold",
+        marginTop: 10,
+        fontSize: 17,
+        fontWeight: "700",
     },
+
     green: {
         color: "#16a34a",
     },
+
     red: {
         color: "#dc2626",
     },
+
     neutral: {
-        color: "#111827",
+        color: "#020617",
     },
+
+    divider: {
+        height: 1,
+        backgroundColor: "#020617",
+        opacity: 0.15,
+        marginVertical: 12,
+    },
+
+    totalsRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 6,
+    },
+
+    totalsLabel: {
+        color: "#475569",
+        fontSize: 14,
+    },
+
+    totalsValue: {
+        fontWeight: "700",
+        fontSize: 14,
+        color: "#020617",
+    },
+
     empty: {
-        color: "#666",
+        color: "#64748b",
+        fontSize: 16,
+        marginTop: 20,
     },
+
     centered: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
     },
-    divider: {
-        height: 1,
-        backgroundColor: "#e5e7eb",
-        marginVertical: 10,
-    },  
-    totalsRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 4,
-    },
-    totalsLabel: {
-        color: "#374151",
-        fontSize: 14,
-    }, 
-    totalsValue: {
-        fontWeight: "600",
-        fontSize: 14,
-    },      
 });
+
+

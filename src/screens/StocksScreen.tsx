@@ -33,8 +33,6 @@ export default function StocksScreen({ navigation }: Props) {
         "META", // Facebook
         "TSLA", // Tesla
         "NVDA", // Nvidia
-        "INTC", // Intel
-        "AMD", // AMD
     ];
 
     const [stocks, setStocks] = useState<Stock[]>([]);
@@ -98,6 +96,7 @@ export default function StocksScreen({ navigation }: Props) {
     const renderItem = ({ item }: { item: Stock }) => {
         return (
             <TouchableOpacity
+                activeOpacity={0.85}
                 style={styles.item}
                 onPress={() =>
                 // Tohle jde do STACKU (StockDetail je screen ve Stacku)
@@ -118,16 +117,12 @@ export default function StocksScreen({ navigation }: Props) {
 
     return (
         <View style={styles.container}>
-        <FlatList<Stock>
-            data={stocks}
-            keyExtractor={(item) => item.symbol}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-        />
-
-        <View style={{ padding: 16 }}>
-            <Button title="Zpět na Home" onPress={() => navigation.navigate("Home")} />
-        </View>
+            <FlatList<Stock>
+                data={stocks}
+                keyExtractor={(item) => item.symbol}
+                renderItem={renderItem}
+                contentContainerStyle={styles.listContent}
+            />
         </View>
     );
 }
@@ -135,17 +130,18 @@ export default function StocksScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "E6E6E6",
+        backgroundColor: "#f3f4f6",
     },
     listContent: {
         padding: 16,
     },
     item: {
         padding: 16,
-        marginBottom: 12,
-        borderRadius: 8,
+        marginBottom: 14,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#ddd",
+        backgroundColor: "#111827",
+        borderColor: "#1f2937",
     },
     itemHeader: {
         flexDirection: "row",
@@ -159,24 +155,16 @@ const styles = StyleSheet.create({
     symbol: {
         fontSize: 20,
         fontWeight: "bold",
+        color: "#f9fafb",
     },
     price: {
         fontSize: 18,
         fontWeight: "600",
+        color: "#e5e7eb",
     },
     name: {
         fontSize: 14,
-        color: "#555",
-    },
-    change: {
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    positive: {
-        color: "green",
-    },
-    negative: {
-        color: "red",
+        color: "#9ca3af",
     },
     centered: {
         flex: 1,
