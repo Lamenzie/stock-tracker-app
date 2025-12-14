@@ -26,7 +26,16 @@ type Props = {
 
 
 export default function StocksScreen({ navigation }: Props) {
-    const symbols = ["AAPL", "TSLA", "MSFT"];
+    const symbols = [
+        "AAPL", // Apple
+        "MSFT", // Microsoft
+        "GOOGL", // Google
+        "META", // Facebook
+        "TSLA", // Tesla
+        "NVDA", // Nvidia
+        "INTC", // Intel
+        "AMD", // AMD
+    ];
 
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
@@ -40,6 +49,7 @@ export default function StocksScreen({ navigation }: Props) {
         const results: Stock[] = [];
 
         for (const symbol of symbols) {
+        try {
             const quote = await getStockQuote(symbol);
 
             results.push({
@@ -48,9 +58,13 @@ export default function StocksScreen({ navigation }: Props) {
             price: quote.price,
             change: quote.change,
             });
+        } catch (err) {
+            console.warn(`Skipping ${symbol}: API error`);
+        }
         }
 
         setStocks(results);
+
         } catch (err: any) {
         console.log("StocksScreen API error:", err);
         setError(err.message || "Nastala chyba");
@@ -83,29 +97,20 @@ export default function StocksScreen({ navigation }: Props) {
 
     const renderItem = ({ item }: { item: Stock }) => {
         return (
-        <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-            // Tohle jde do STACKU (StockDetail je screen ve Stacku)
-            navigation.navigate("StockDetail", { symbol: item.symbol })
-            }
-        >
+            <TouchableOpacity
+                style={styles.item}
+                onPress={() =>
+                // Tohle jde do STACKU (StockDetail je screen ve Stacku)
+                navigation.navigate("StockDetail", { symbol: item.symbol })
+                }
+            >
             <View style={styles.itemHeader}>
-            <Text style={styles.symbol}>{item.symbol}</Text>
-            <Text style={styles.price}>{item.price.toFixed(2)} $</Text>
+                <Text style={styles.symbol}>{item.symbol}</Text>
+                <Text style={styles.price}>{item.price.toFixed(2)} $</Text>
             </View>
 
             <View style={styles.itemFooter}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text
-                style={[
-                styles.change,
-                item.change >= 0 ? styles.positive : styles.negative,
-                ]}
-            >
-                {item.change >= 0 ? "+" : ""}
-                {item.change.toFixed(2)} %
-            </Text>
+                <Text style={styles.name}>{item.name}</Text>
             </View>
         </TouchableOpacity>
         );
@@ -130,6 +135,7 @@ export default function StocksScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: "E6E6E6",
     },
     listContent: {
         padding: 16,

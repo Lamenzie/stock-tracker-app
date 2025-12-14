@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    Button,
+    Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { addTransaction } from "../storage/portfolio";
 import { RouteProp } from "@react-navigation/native";
 
 type AddTransactionNav = NativeStackNavigationProp<
@@ -10,70 +17,62 @@ type AddTransactionNav = NativeStackNavigationProp<
     "AddTransaction"
 >;
 
-type AddTransactionRoute = RouteProp<RootStackParamList, "AddTransaction">;
-
 type Props = {
     navigation: AddTransactionNav;
-    route: AddTransactionRoute;
-};
+    route: RouteProp<RootStackParamList, "AddTransaction">;
+    };
 
-export default function AddTransactionScreen({ navigation, route }: Props) {
+    export default function AddTransactionScreen({ navigation, route }: Props) {
     const { symbol, currentPrice } = route.params;
 
-    const [type, setType] = useState<"BUY" | "SELL">("BUY");
-    const [amount, setAmount] = useState("");
-    const [price, setPrice] = useState(currentPrice.toString());
+    const [amount, setAmount] = useState<string>("");
 
-    async function save() {
-        if (!amount || !price) {
-        alert("Vyplň množství a cenu.");
+    async function saveTransaction() {
+        const parsedAmount = Number(amount);
+
+        if (!parsedAmount || parsedAmount <= 0) {
+        Alert.alert("Chyba", "Zadej platný počet kusů");
         return;
         }
 
-        await addTransaction({
+        const newTransaction = {
         symbol,
-        type,
-        amount: Number(amount),
-        price: Number(price),
-        });
+        amount: parsedAmount,
+        price: currentPrice,
+        type: "buy",
+        date: new Date().toISOString(),
+        };
+
+        const raw = await AsyncStorage.getItem("transactions");
+        const transactions = raw ? JSON.parse(raw) : [];
+
+        transactions.push(newTransaction);
+
+        await AsyncStorage.setItem(
+        "transactions",
+        JSON.stringify(transactions)
+        );
 
         navigation.goBack();
     }
 
     return (
         <View style={styles.container}>
-        <Text style={styles.title}>Přidat transakci ({symbol})</Text>
+        <Text style={styles.title}>Nákup akcie {symbol}</Text>
 
-        <View style={styles.row}>
-            <Button
-            title="BUY"
-            color={type === "BUY" ? "green" : "gray"}
-            onPress={() => setType("BUY")}
-            />
-            <Button
-            title="SELL"
-            color={type === "SELL" ? "red" : "gray"}
-            onPress={() => setType("SELL")}
-            />
-        </View>
+        <Text style={styles.label}>Aktuální cena</Text>
+        <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
 
-        <Text>Množství (počet kusů):</Text>
+        <Text style={styles.label}>Počet kusů</Text>
         <TextInput
             style={styles.input}
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
+            placeholder="Např. 5"
         />
 
-        <Text>Cena za kus ($):</Text>
-        <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-        />
-
-        <Button title="Uložit transakci" onPress={save} />
+        <Button title="Uložit transakci" onPress={saveTransaction} />
         </View>
     );
 }
@@ -82,21 +81,26 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        gap: 20,
     },
     title: {
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: "bold",
+        marginBottom: 20,
     },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        gap: 20,
+    label: {
+        marginTop: 12,
+        color: "#555",
+    },
+    price: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 12,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#999",
+        borderColor: "#ccc",
+        borderRadius: 8,
         padding: 10,
-        borderRadius: 5,
+        marginBottom: 20,
     },
 });

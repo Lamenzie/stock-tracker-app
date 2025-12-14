@@ -1,146 +1,212 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Button } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Button,
+  Pressable,
+  Dimensions,
+} from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { getStockQuote, getStockHistory } from "../api/stocksApi";
+import {
+  getStockQuote,
+  getStockHistory,
+  getStockIntradayHistory,
+} from "../api/stocksApi";
 import Svg, { Path, Text as SvgText } from "react-native-svg";
 
 type StockDetailNavigationProp = NativeStackNavigationProp<
-    RootStackParamList,
-    "StockDetail"
+  RootStackParamList,
+  "StockDetail"
 >;
 
 type Props = {
-    navigation: StockDetailNavigationProp;
-    route: { params: { symbol: string } };
+  navigation: StockDetailNavigationProp;
+  route: { params: { symbol: string } };
 };
 
+type TimeRange = "1D" | "1M";
+type Point = { date: string; price: number };
+
 export default function StockDetailScreen({ navigation, route }: Props) {
-    const { symbol } = route.params;
+  const { symbol } = route.params;
 
-    // ---------- STATES ----------
-    const [price, setPrice] = useState<number | null>(null);
-    const [change, setChange] = useState<number | null>(null);
-    const [history, setHistory] = useState<{ date: string; price: number }[]>([]);
-    const [loading, setLoading] = useState(true);
+  const [price, setPrice] = useState<number | null>(null);
+  const [history1M, setHistory1M] = useState<Point[]>([]);
+  const [history1D, setHistory1D] = useState<Point[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<TimeRange>("1M");
 
-    // ---------- LOAD DATA ----------
-    useEffect(() => {
-      async function load() {
-        try {
-          const quote = await getStockQuote(symbol);
-          setPrice(quote.price);
-          setChange(quote.change);
+  useEffect(() => {
+    let mounted = true;
 
-          const hist = await getStockHistory(symbol);
-          setHistory(hist.slice(-5)); // posledních 5 bodů
-        } finally {
-          setLoading(false);
-        }
+    async function load() {
+      try {
+        setLoading(true);
+
+        const quote = await getStockQuote(symbol);
+
+        const [histM, histD] = await Promise.all([
+          getStockHistory(symbol), // daily
+          getStockIntradayHistory(symbol), // 5min
+        ]);
+
+        if (!mounted) return;
+
+        setPrice(quote.price);
+        setHistory1M(histM); // už máš cca 10 bodů (cache/limit u tebe)
+        setHistory1D(histD);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      load();
-    }, []);
-
-    // ---------- GRAPH CALCULATIONS ----------
-    const chartWidth = 350;
-    const chartHeight = 180;
-    const padding = 40;
-
-    const simpleHistory = useMemo(() => history, [history]);
-
-    const maxPrice = useMemo(
-      () => Math.max(...simpleHistory.map((h) => h.price)),
-      [simpleHistory]
-    );
-    const minPrice = useMemo(
-      () => Math.min(...simpleHistory.map((h) => h.price)),
-      [simpleHistory]
-    );
-
-    const range = maxPrice - minPrice || 1;
-
-    const path = useMemo(() => {
-      if (simpleHistory.length === 0) return "";
-
-      return simpleHistory
-        .map((p, i) => {
-          const x =
-            padding +
-            (i * (chartWidth - padding * 2)) / (simpleHistory.length - 1);
-          const y =
-            padding +
-            (1 - (p.price - minPrice) / range) * (chartHeight - padding * 2);
-          return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-        })
-        .join(" ");
-    }, [simpleHistory, minPrice, range]);
-
-    // ---------- LOADING ----------
-    if (loading) {
-      return (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-          <Text>Načítám data...</Text>
-        </View>
-      );
     }
 
-    // ---------- UI ----------
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [symbol]);
+
+  // vyber data podle přepínače
+  const chartData = useMemo(() => {
+    return range === "1D" ? history1D : history1M;
+  }, [range, history1D, history1M]);
+
+  // výpočet % změny podle vybraného rozsahu
+  const changePercent = useMemo(() => {
+    if (!chartData || chartData.length < 2) return 0;
+
+    const first = range === "1D" ? chartData[chartData.length - 2] : chartData[0];
+    const last = chartData[chartData.length - 1];
+
+    if (!first?.price || !last?.price) return 0;
+    if (first.price === 0) return 0;
+
+    return ((last.price - first.price) / first.price) * 100;
+  }, [chartData, range]);
+
+  // ===== SVG graf výpočty (full width) =====
+  const screenW = Dimensions.get("window").width;
+  const chartWidth = Math.min(screenW - 40, 420); // pěkné i na iPadu
+  const chartHeight = 200;
+  const padding = 28;
+
+  const maxPrice = useMemo(() => {
+    if (chartData.length === 0) return 0;
+    return Math.max(...chartData.map((h) => h.price));
+  }, [chartData]);
+
+  const minPrice = useMemo(() => {
+    if (chartData.length === 0) return 0;
+    return Math.min(...chartData.map((h) => h.price));
+  }, [chartData]);
+
+  const rangeValue = maxPrice - minPrice || 1;
+
+  const path = useMemo(() => {
+    if (chartData.length < 2) return "";
+
+    return chartData
+      .map((p, i) => {
+        const x =
+          padding +
+          (i * (chartWidth - padding * 2)) / (chartData.length - 1);
+
+        const y =
+          padding +
+          (1 - (p.price - minPrice) / rangeValue) * (chartHeight - padding * 2);
+
+        return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+      })
+      .join(" ");
+  }, [chartData, chartWidth, chartHeight, padding, minPrice, rangeValue]);
+
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.symbol}>{symbol}</Text>
-        <Text style={styles.price}>{price?.toFixed(2)} $</Text>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 8 }}>Načítám data...</Text>
+      </View>
+    );
+  }
 
-        <Text style={[styles.change, change! >= 0 ? styles.green : styles.red]}>
-          {change! >= 0 ? "+" : ""}
-          {change?.toFixed(2)} %
-        </Text>
+  const positive = changePercent >= 0;
 
-        {/* ---------- GRAPH ---------- */}
-        <View style={{ marginTop: 30 }}>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.symbol}>{symbol}</Text>
+      <Text style={styles.price}>{price?.toFixed(2)} $</Text>
+
+      <Text style={[styles.change, positive ? styles.green : styles.red]}>
+        {positive ? "+" : ""}
+        {changePercent.toFixed(2)} %
+      </Text>
+
+      {/* ===== RANGE SWITCH ===== */}
+      <View style={styles.switch}>
+        <Pressable
+          onPress={() => setRange("1D")}
+          style={[styles.switchItem, range === "1D" && styles.switchActive]}
+        >
+          <Text style={range === "1D" ? styles.switchTextActive : undefined}>
+            1D
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setRange("1M")}
+          style={[styles.switchItem, range === "1M" && styles.switchActive]}
+        >
+          <Text style={range === "1M" ? styles.switchTextActive : undefined}>
+            1M
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* ===== GRAPH CARD ===== */}
+      <View style={[styles.chartCard, { width: chartWidth + 20 }]}>
+        {chartData.length < 2 ? (
+          <Text style={{ color: "#666" }}>Graf zatím není k dispozici.</Text>
+        ) : (
           <Svg width={chartWidth} height={chartHeight}>
-            {/* MIN VALUE LABEL */}
+            {/* labels */}
+            <SvgText fill="#6b7280" fontSize="12" x={0} y={padding}>
+              {maxPrice.toFixed(2)}
+            </SvgText>
+
             <SvgText
               fill="#6b7280"
               fontSize="12"
-              x={5}
-              y={chartHeight - padding + 5}
+              x={0}
+              y={chartHeight - padding + 10}
             >
               {minPrice.toFixed(2)}
             </SvgText>
 
-            {/* MAX VALUE LABEL */}
-            <SvgText fill="#6b7280" fontSize="12" x={5} y={padding}>
-              {maxPrice.toFixed(2)}
-            </SvgText>
-
-            {/* GRID */}
+            {/* grid */}
             <Path
               d={`M ${padding} ${padding} L ${chartWidth - padding} ${padding}`}
               stroke="#e5e7eb"
-              strokeWidth={1}
               strokeDasharray="4"
             />
-
             <Path
               d={`M ${padding} ${chartHeight / 2} L ${chartWidth - padding} ${
                 chartHeight / 2
               }`}
               stroke="#e5e7eb"
-              strokeWidth={1}
               strokeDasharray="4"
             />
-
             <Path
               d={`M ${padding} ${chartHeight - padding} L ${
                 chartWidth - padding
               } ${chartHeight - padding}`}
               stroke="#e5e7eb"
-              strokeWidth={1}
               strokeDasharray="4"
             />
 
-            {/* MAIN LINE */}
+            {/* line */}
             <Path
               d={path}
               fill="none"
@@ -150,25 +216,31 @@ export default function StockDetailScreen({ navigation, route }: Props) {
               strokeLinejoin="round"
             />
           </Svg>
-        </View>
+        )}
+      </View>
+
+      <View style={{ width: "100%", paddingHorizontal: 20, marginTop: 14 }}>
         <Button
           title="Přidat transakci"
           onPress={() =>
             navigation.navigate("AddTransaction", {
               symbol,
-              currentPrice: price!,
+              currentPrice: price ?? 0,
             })
           }
         />
       </View>
-    );
+    </View>
+  );
 }
 
+// ---------- STYLES ----------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
     paddingTop: 40,
+    backgroundColor: "#fff",
   },
   symbol: {
     fontSize: 32,
@@ -179,19 +251,51 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   change: {
-    fontSize: 24,
-    marginTop: 10,
-    fontWeight: "bold",
+    fontSize: 20,
+    marginTop: 8,
+    fontWeight: "700",
   },
   green: {
-    color: "green",
+    color: "#16a34a",
   },
   red: {
-    color: "red",
+    color: "#dc2626",
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  switch: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  switchItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#e5e7eb",
+  },
+  switchActive: {
+    backgroundColor: "#000",
+  },
+  switchTextActive: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  chartCard: {
+    padding: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
 });

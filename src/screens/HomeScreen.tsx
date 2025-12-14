@@ -1,62 +1,74 @@
-import { View, Text, StyleSheet, Button } from "react-native";
 import React, { useEffect, useState } from "react";
-// import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-// import { RootStackParamList } from "../navigation/AppNavigator";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
 import { TabParamList } from "../navigation/AppNavigator";
-import { getPortfolioSummary } from "../storage/portfolio";
+import {
+    calculatePortfolio,
+    PortfolioSummary,
+} from "../services/portfolioService";
 
-type HomeNav = BottomTabNavigationProp<
-    TabParamList,
-    "Home"
->;
+type HomeNav = BottomTabNavigationProp<TabParamList, "Home">;
 
-export default function HomeScreen({ navigation }: { navigation: HomeNav }) {
-    const [summary, setSummary] = useState({
-        invested: 0,
-        currentValue: 0,
-        profit: 0,
-        profitPercent: 0,
-    });
+type Props = {
+    navigation: HomeNav;
+};
 
-    useEffect(() => {
-        const load = async () => {
-        const data = await getPortfolioSummary();
+export default function HomeScreen({ navigation }: Props) {
+    const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+
+    useFocusEffect(
+        useCallback(() => {
+        load();
+        }, [])
+    );
+
+    async function load() {
+        const data = await calculatePortfolio();
         setSummary(data);
-        };
+    }
 
-        const unsub = navigation.addListener("focus", load);
-        return unsub;
-    }, [navigation]);
+    if (!summary) return null;
+
+    const positive = summary.profit >= 0;
 
     return (
         <View style={styles.container}>
-        <Text style={styles.title}>LamaStockTracker</Text>
+        <Text style={styles.header}>LlamaStockTracker</Text>
+        <Text style={styles.title}>Moje portfolio</Text>
 
-        <View style={styles.card}>
-            <Text style={styles.cardTitle}>Moje portfolio</Text>
+        <Text style={styles.value}>
+            {summary.currentValue.toFixed(2)} $
+        </Text>
 
-            <Text style={styles.label}>
-            Investováno: <Text style={styles.value}>{summary.invested.toFixed(2)} $</Text>
-            </Text>
-
-            <Text style={styles.label}>
-            Aktuální hodnota:{" "}
-            <Text style={styles.value}>{summary.currentValue.toFixed(2)} $</Text>
-            </Text>
-
-            <Text
+        <Text
             style={[
-                styles.label,
-                summary.profit >= 0 ? styles.green : styles.red,
+            styles.profit,
+            positive ? styles.positive : styles.negative,
             ]}
-            >
-            Zisk/ztráta: {summary.profit.toFixed(2)} $ (
+        >
+            {positive ? "+" : ""}
+            {summary.profit.toFixed(2)} $ (
             {summary.profitPercent.toFixed(2)} %)
-            </Text>
-        </View>
+        </Text>
 
-        <Text style={styles.footerText}>Použij spodní menu pro navigaci</Text>
+        <View style={styles.actions}>
+            <Pressable
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate("Portfolio")}
+            >
+            <Text style={styles.actionText}>Portfolio</Text>
+            </Pressable>
+
+            <Pressable
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate("Stocks")}
+            >
+            <Text style={styles.actionText}>Akcie</Text>
+            </Pressable>
+        </View>
         </View>
     );
 }
@@ -64,47 +76,46 @@ export default function HomeScreen({ navigation }: { navigation: HomeNav }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        paddingTop: 70,
-        backgroundColor: "#f5f5f5",
+        padding: 24,
+        justifyContent: "center",
     },
     title: {
-        fontSize: 28,
-        fontWeight: "bold",
-        marginBottom: 30,
-        textAlign: "center",
-    },
-    card: {
-        backgroundColor: "white",
-        padding: 20,
-        borderRadius: 16,
-        elevation: 4,
-        shadowColor: "#000",
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 3 },
-    },
-    cardTitle: {
         fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 15,
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 8,
+        color: "#666",
+        marginBottom: 6,
     },
     value: {
+        fontSize: 42,
+        fontWeight: "bold",
+        marginBottom: 4,
+    },
+    profit: {
+        fontSize: 18,
+        fontWeight: "600",
+        marginBottom: 30,
+    },
+    positive: {
+        color: "#16a34a",
+    },
+    negative: {
+        color: "#dc2626",
+    },
+    actions: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    actionBtn: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 10,
+        backgroundColor: "#A8ABAE",
+        alignItems: "center",
+    },
+    actionText: {
+        fontSize: 16,
         fontWeight: "600",
     },
-    green: {
-        color: "green",
-    },
-    red: {
-        color: "red",
-    },
-    footerText: {
-        marginTop: 30,
-        textAlign: "center",
-        color: "#888",
-    },
-    }); 
+    header: {
+        fontSize: 32,
+    }
+});
