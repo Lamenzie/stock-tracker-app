@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    Alert,
-    Pressable,
-    KeyboardAvoidingView,
-    Platform,
-    TouchableWithoutFeedback,
-    Keyboard,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Alert,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,18 +17,24 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { RouteProp } from "@react-navigation/native";
 
 type AddTransactionNav = NativeStackNavigationProp<
-    RootStackParamList,
-    "AddTransaction"
+  RootStackParamList,
+  "AddTransaction"
 >;
 
 type Props = {
-    navigation: AddTransactionNav;
-    route: RouteProp<RootStackParamList, "AddTransaction">;
+  navigation: AddTransactionNav;
+  route: RouteProp<RootStackParamList, "AddTransaction">;
 };
 
 export default function AddTransactionScreen({ navigation, route }: Props) {
-  const { symbol, currentPrice } = route.params;
-  const [amount, setAmount] = useState<string>("");
+  const {
+    symbol,
+    currentPrice,
+    mode = "buy",
+    maxAmount,
+  } = route.params;
+
+  const [amount, setAmount] = useState("");
 
   async function saveTransaction() {
     const parsedAmount = Number(amount);
@@ -38,11 +44,19 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
       return;
     }
 
+    if (mode === "sell" && maxAmount && parsedAmount > maxAmount) {
+      Alert.alert(
+        "Chyba",
+        "Nemůžeš prodat více kusů, než vlastníš"
+      );
+      return;
+    }
+
     const newTransaction = {
       symbol,
       amount: parsedAmount,
       price: currentPrice,
-      type: "buy",
+      type: mode,
       date: new Date().toISOString(),
     };
 
@@ -50,7 +64,11 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
     const transactions = raw ? JSON.parse(raw) : [];
 
     transactions.push(newTransaction);
-    await AsyncStorage.setItem("transactions", JSON.stringify(transactions));
+
+    await AsyncStorage.setItem(
+      "transactions",
+      JSON.stringify(transactions)
+    );
 
     navigation.goBack();
   }
@@ -62,12 +80,21 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <Text style={styles.title}>Nákup akcie {symbol}</Text>
+          <Text style={styles.title}>
+            {mode === "buy" ? "Nákup" : "Prodej"} akcie {symbol}
+          </Text>
 
           <Text style={styles.label}>Aktuální cena</Text>
-          <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
+          <Text style={styles.price}>
+            {currentPrice.toFixed(2)} $
+          </Text>
 
-          <Text style={styles.label}>Počet kusů</Text>
+          <Text style={styles.label}>
+            {mode === "buy"
+              ? "Počet kusů"
+              : `Počet kusů (max ${maxAmount})`}
+          </Text>
+
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -77,12 +104,14 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
             returnKeyType="done"
           />
 
-          {/* Spacer */}
           <View style={{ flex: 1 }} />
 
-          {/* FIXNÍ TLAČÍTKO DOLE */}
           <Pressable style={styles.saveBtn} onPress={saveTransaction}>
-            <Text style={styles.saveText}>Uložit transakci</Text>
+            <Text style={styles.saveText}>
+              {mode === "buy"
+                ? "Uložit nákup"
+                : "Prodat akcie"}
+            </Text>
           </Pressable>
         </View>
       </TouchableWithoutFeedback>
@@ -90,80 +119,46 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
   );
 }
 
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-    },
-
-    content: {
-        flex: 1,
-        padding: 24,
-        alignItems: "center",
-    },
-
-    title: {
-        fontSize: 30,
-        fontWeight: "800",
-        marginTop: 20,
-        textAlign: "center",
-    },
-
-    symbol: {
-        fontSize: 22,
-        color: "#2563eb",
-        marginBottom: 30,
-    },
-
-    card: {
-        width: "100%",
-        backgroundColor: "#f9fafb",
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "#e5e7eb",
-    },
-
-    label: {
-        fontSize: 14,
-        color: "#6b7280",
-        marginBottom: 6,
-    },
-
-    price: {
-        fontSize: 26,
-        fontWeight: "700",
-    },
-
-    input: {
-        fontSize: 22,
-        padding: 16,
-        borderWidth: 1,
-        borderRadius: 12,
-        borderColor: "#2563eb",
-    },
-
-    bottom: {
-        padding: 20,
-        borderTopWidth: 1,
-        borderColor: "#e5e7eb",
-        backgroundColor: "#fff",
-    },
-
-    saveBtn: {
-        backgroundColor: "#020617",
-        paddingVertical: 18,
-        borderRadius: 18,
-        alignItems: "center",
-        marginBottom: 20,
-    },
-
-    saveText: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "700",
-    },
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: "#fff",
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    marginTop: 20,
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  label: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 6,
+  },
+  price: {
+    fontSize: 26,
+    fontWeight: "700",
+    marginBottom: 20,
+  },
+  input: {
+    fontSize: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: "#2563eb",
+  },
+  saveBtn: {
+    backgroundColor: "#020617",
+    paddingVertical: 18,
+    borderRadius: 18,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  saveText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+  },
 });
-

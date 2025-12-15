@@ -16,7 +16,7 @@ import AddTransactionScreen from "../screens/AddTransactionScreen";
 export type RootStackParamList = {
   Tabs: undefined;
   StockDetail: { symbol: string };
-  AddTransaction: { symbol: string; currentPrice: number };
+  AddTransaction: { symbol: string; currentPrice: number; mode?: "buy" | "sell"; maxAmount?: number; };
 };
 
 export type TabParamList = {

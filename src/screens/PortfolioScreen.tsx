@@ -1,14 +1,31 @@
 import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import {
     View,
     Text,
     StyleSheet,
     FlatList,
     ActivityIndicator,
+    Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStockQuote } from "../api/stocksApi";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CompositeNavigationProp } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { TabParamList, RootStackParamList } from "../navigation/AppNavigator";
+
+type PortfolioNav = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, "Portfolio">,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+
+type Props = {
+  navigation: PortfolioNav;
+};
 
 type Transaction = {
     symbol: string;
@@ -29,13 +46,15 @@ type Holding = {
     profitPercent: number;
 };
 
-export default function PortfolioScreen() {
+export default function PortfolioScreen({ navigation }: Props) {
     const [holdings, setHoldings] = useState<Holding[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadPortfolio();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadPortfolio();
+        }, [])
+    );
 
     async function loadPortfolio() {
         setLoading(true);
@@ -160,6 +179,18 @@ export default function PortfolioScreen() {
                             {!neutral && positive ? "+" : ""}
                             {profitValue.toFixed(2)} $ ({profitPercentValue.toFixed(2)} %)
                         </Text>
+                        <Pressable
+                            onPress={() =>
+                                navigation.navigate("AddTransaction", {
+                                symbol: item.symbol,
+                                currentPrice: item.currentPrice,
+                                mode: "sell",
+                                maxAmount: item.amount,
+                                })
+                            }
+                            >
+                            <Text style={styles.sell}>Prodat</Text>
+                        </Pressable>
                     </View>
                     );
                 }}
@@ -258,6 +289,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+    },
+    sell: {
+        marginTop: 8,
+        color: "#dc2626",
+        fontWeight: "600",
     },
 });
 
