@@ -15,6 +15,7 @@ import { getStockQuote } from "../api/stocksApi";
 
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type StackNav = NativeStackNavigationProp<RootStackParamList, "StockDetail">;
 
@@ -116,6 +117,7 @@ export default function StocksScreen({ navigation }: Props) {
     };
 
     return (
+        <SafeAreaView style = {{ flex: 1 }}>
         <View style={styles.container}>
             <FlatList<Stock>
                 data={stocks}
@@ -124,6 +126,7 @@ export default function StocksScreen({ navigation }: Props) {
                 contentContainerStyle={styles.listContent}
             />
         </View>
+        </SafeAreaView>
     );
 }
 

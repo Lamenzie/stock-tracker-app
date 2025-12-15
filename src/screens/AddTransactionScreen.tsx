@@ -58,42 +58,42 @@ export default function AddTransactionScreen({ navigation, route }: Props) {
 }
 
     return (
-        <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-        <View style={styles.container}>
-            {/* ===== CONTENT ===== */}
-            <View style={styles.content}>
-            <Text style={styles.title}>Nákup akcie</Text>
-            <Text style={styles.symbol}>{symbol}</Text>
+            <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
+            <View style={styles.container}>
+                {/* ===== CONTENT ===== */}
+                <View style={styles.content}>
+                <Text style={styles.title}>Nákup akcie</Text>
+                <Text style={styles.symbol}>{symbol}</Text>
 
-            <View style={styles.card}>
-                <Text style={styles.label}>Aktuální cena</Text>
-                <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
-            </View>
+                <View style={styles.card}>
+                    <Text style={styles.label}>Aktuální cena</Text>
+                    <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
+                </View>
 
-            <View style={styles.card}>
-                <Text style={styles.label}>Počet kusů</Text>
-                <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="Např. 5"
-                placeholderTextColor="#9ca3af"
-                />
-            </View>
-            </View>
+                <View style={styles.card}>
+                    <Text style={styles.label}>Počet kusů</Text>
+                    <TextInput
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="Např. 5"
+                    placeholderTextColor="#9ca3af"
+                    />
+                </View>
+                </View>
 
-            {/* ===== BOTTOM ACTION ===== */}
-            <View style={styles.bottom}>
-            <Pressable style={styles.saveBtn} onPress={saveTransaction}>
-                <Text style={styles.saveText}>Uložit transakci</Text>
-            </Pressable>
+                {/* ===== BOTTOM ACTION ===== */}
+                <View style={styles.bottom}>
+                <Pressable style={styles.saveBtn} onPress={saveTransaction}>
+                    <Text style={styles.saveText}>Uložit transakci</Text>
+                </Pressable>
+                </View>
             </View>
-        </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
     );
 }
 

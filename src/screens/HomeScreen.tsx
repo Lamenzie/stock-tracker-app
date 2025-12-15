@@ -9,6 +9,7 @@ import {
     calculatePortfolio,
     PortfolioSummary,
 } from "../services/portfolioService";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type HomeNav = BottomTabNavigationProp<TabParamList, "Home">;
 
@@ -35,51 +36,53 @@ export default function HomeScreen({ navigation }: Props) {
     const positive = summary.profit >= 0;
 
     return (
-    <View style={styles.container}>
-        {/* ===== HERO ===== */}
-        <LinearGradient
-        colors={["#020617", "#252d41ff"]}
-        style={styles.hero}
-        >
-            <Text style={styles.header}>LlamaStockTracker</Text>
-
-            <Text style={styles.title}>Moje portfolio</Text>
-
-            <Text style={styles.value}>
-                {summary.currentValue.toFixed(2)} $
-            </Text>
-
-            <Text
-                style={[
-                styles.profit,
-                positive ? styles.positive : styles.negative,
-                ]}
+    <SafeAreaView edges={["top"]} style={{ flex: 1}}>
+        <View style={styles.container}>
+            {/* ===== HERO ===== */}
+            <LinearGradient
+            colors={["#020617", "#252d41ff"]}
+            style={styles.hero}
             >
-                {positive ? "+" : ""}
-                {summary.profit.toFixed(2)} $ (
-                {summary.profitPercent.toFixed(2)} %)
-            </Text>
-        </LinearGradient>
-    
-    <View style={styles.middle} />
+                <Text style={styles.header}>LlamaStockTracker</Text>
 
-        {/* ===== ACTIONS ===== */}
-        <View style={styles.actions}>
-        <Pressable
-            style={styles.actionBtn}
-            onPress={() => navigation.navigate("Portfolio")}
-        >
-            <Text style={styles.actionText}>Portfolio</Text>
-        </Pressable>
+                <Text style={styles.title}>Moje portfolio</Text>
 
-        <Pressable
-            style={styles.actionBtn}
-            onPress={() => navigation.navigate("Stocks")}
-        >
-            <Text style={styles.actionText}>Akcie</Text>
-        </Pressable>
+                <Text style={styles.value}>
+                    {summary.currentValue.toFixed(2)} $
+                </Text>
+
+                <Text
+                    style={[
+                    styles.profit,
+                    positive ? styles.positive : styles.negative,
+                    ]}
+                >
+                    {positive ? "+" : ""}
+                    {summary.profit.toFixed(2)} $ (
+                    {summary.profitPercent.toFixed(2)} %)
+                </Text>
+            </LinearGradient>
+        
+        <View style={styles.middle} />
+
+            {/* ===== ACTIONS ===== */}
+            <View style={styles.actions}>
+            <Pressable
+                style={styles.actionBtn}
+                onPress={() => navigation.navigate("Portfolio")}
+            >
+                <Text style={styles.actionText}>Portfolio</Text>
+            </Pressable>
+
+            <Pressable
+                style={styles.actionBtn}
+                onPress={() => navigation.navigate("Stocks")}
+            >
+                <Text style={styles.actionText}>Akcie</Text>
+            </Pressable>
+            </View>
         </View>
-    </View>
+    </SafeAreaView>
 );
 }
 

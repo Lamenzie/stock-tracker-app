@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStockQuote } from "../api/stocksApi";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Transaction = {
     symbol: string;
@@ -106,6 +107,7 @@ export default function PortfolioScreen() {
     }
 
     return (
+        <SafeAreaView edges={["top"]} style={{ flex: 1}}>
         <View style={styles.container}>
         <Text style={styles.title}>Moje portfolio</Text>
 
@@ -164,6 +166,7 @@ export default function PortfolioScreen() {
             />
         )}
         </View>
+        </SafeAreaView>
     );
 }
 
