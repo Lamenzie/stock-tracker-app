@@ -8,6 +8,8 @@ import {
     Pressable,
     KeyboardAvoidingView,
     Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,77 +27,69 @@ type Props = {
 };
 
 export default function AddTransactionScreen({ navigation, route }: Props) {
-    const { symbol, currentPrice } = route.params;
-    const [amount, setAmount] = useState("");
+  const { symbol, currentPrice } = route.params;
+  const [amount, setAmount] = useState<string>("");
 
-    async function saveTransaction() {
-        const parsedAmount = Number(amount);
+  async function saveTransaction() {
+    const parsedAmount = Number(amount);
 
-        if (!parsedAmount || parsedAmount <= 0) {
-        Alert.alert("Chyba", "Zadej platný počet kusů");
-        return;
-        }
+    if (!parsedAmount || parsedAmount <= 0) {
+      Alert.alert("Chyba", "Zadej platný počet kusů");
+      return;
+    }
 
-        const newTransaction = {
-        symbol,
-        amount: parsedAmount,
-        price: currentPrice,
-        type: "buy",
-        date: new Date().toISOString(),
-        };
+    const newTransaction = {
+      symbol,
+      amount: parsedAmount,
+      price: currentPrice,
+      type: "buy",
+      date: new Date().toISOString(),
+    };
 
-        const raw = await AsyncStorage.getItem("transactions");
-        const transactions = raw ? JSON.parse(raw) : [];
+    const raw = await AsyncStorage.getItem("transactions");
+    const transactions = raw ? JSON.parse(raw) : [];
 
-        transactions.push(newTransaction);
+    transactions.push(newTransaction);
+    await AsyncStorage.setItem("transactions", JSON.stringify(transactions));
 
-        await AsyncStorage.setItem(
-        "transactions",
-        JSON.stringify(transactions)
-        );
+    navigation.goBack();
+  }
 
-        navigation.goBack();
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Nákup akcie {symbol}</Text>
+
+          <Text style={styles.label}>Aktuální cena</Text>
+          <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
+
+          <Text style={styles.label}>Počet kusů</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Např. 5"
+            returnKeyType="done"
+          />
+
+          {/* Spacer */}
+          <View style={{ flex: 1 }} />
+
+          {/* FIXNÍ TLAČÍTKO DOLE */}
+          <Pressable style={styles.saveBtn} onPress={saveTransaction}>
+            <Text style={styles.saveText}>Uložit transakci</Text>
+          </Pressable>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  );
 }
 
-    return (
-            <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            >
-            <View style={styles.container}>
-                {/* ===== CONTENT ===== */}
-                <View style={styles.content}>
-                <Text style={styles.title}>Nákup akcie</Text>
-                <Text style={styles.symbol}>{symbol}</Text>
-
-                <View style={styles.card}>
-                    <Text style={styles.label}>Aktuální cena</Text>
-                    <Text style={styles.price}>{currentPrice.toFixed(2)} $</Text>
-                </View>
-
-                <View style={styles.card}>
-                    <Text style={styles.label}>Počet kusů</Text>
-                    <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    value={amount}
-                    onChangeText={setAmount}
-                    placeholder="Např. 5"
-                    placeholderTextColor="#9ca3af"
-                    />
-                </View>
-                </View>
-
-                {/* ===== BOTTOM ACTION ===== */}
-                <View style={styles.bottom}>
-                <Pressable style={styles.saveBtn} onPress={saveTransaction}>
-                    <Text style={styles.saveText}>Uložit transakci</Text>
-                </Pressable>
-                </View>
-            </View>
-            </KeyboardAvoidingView>
-    );
-}
 
 const styles = StyleSheet.create({
     container: {
@@ -113,6 +107,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: "800",
         marginTop: 20,
+        textAlign: "center",
     },
 
     symbol: {
@@ -144,8 +139,9 @@ const styles = StyleSheet.create({
 
     input: {
         fontSize: 22,
-        paddingVertical: 12,
-        borderBottomWidth: 2,
+        padding: 16,
+        borderWidth: 1,
+        borderRadius: 12,
         borderColor: "#2563eb",
     },
 
@@ -161,6 +157,7 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         borderRadius: 18,
         alignItems: "center",
+        marginBottom: 20,
     },
 
     saveText: {
